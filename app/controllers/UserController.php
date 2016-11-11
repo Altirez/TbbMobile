@@ -584,6 +584,7 @@ class UserController extends Controller
                                 SELECT LIST_GTD.ID, list_gtd.id_status_ex as status_id                         
                                 FROM LIST_GTD 
                                 WHERE  LIST_GTD.DELETED = 0  AND LIST_GTD.DT_CREATE > '" . date('d.m.y', strtotime('-8 month')) . "'
+                                PLAN (LIST_GTD INDEX(LIST_GTD_IDX8))
                               ) 
                               group by status_id ";
         }
@@ -614,7 +615,9 @@ class UserController extends Controller
                         list_traffic.id_status_ex as status_id,
                         list_traffic.id_direction
                         from LIST_TRAFFIC
-                        WHERE LIST_TRAFFIC.deleted = 0 AND LIST_TRAFFIC.DT_CREATE > '" . date('d.m.y', strtotime('-8 month')) . "') WHERE " . $where_condition . " group by status_id";
+                        WHERE LIST_TRAFFIC.deleted = 0 AND LIST_TRAFFIC.DT_CREATE > '" . date('d.m.y', strtotime('-8 month')) . "'
+                        PLAN (LIST_TRAFFIC INDEX (LIST_TRAFFIC_IDX29))
+                        ) WHERE " . $where_condition . " group by status_id";
         }
         else {
             $st_query = "select status_id as id_status_ex,

@@ -44,8 +44,11 @@ class DeclarationsController extends Controller
         //$this->db->query("UPDATE LIST_GTD SET IS_HAND = 1 WHERE ID=".$edit_object_p["row_id"]);
         $field_objects = $edit_object_p["fields"];
         $edit_string = "";
+
         foreach($field_objects as $field_obj){
-            if(!empty($field_obj["field_type"]) && !empty($field_obj["field_name"]) && !empty($field_obj["field_value"])){
+            $field_obj["field_value"] =  !empty($field_obj["field_value"]) ? $field_obj["field_value"] : "NULL";
+
+            if(!empty($field_obj["field_type"]) && !empty($field_obj["field_name"])){
                 switch($field_obj["field_type"]){
                     case "date":
                         $edit_string .= ", ".substr($field_obj["field_name"],4)." = '".$field_obj["field_value"]."' ";
@@ -344,7 +347,8 @@ class DeclarationsController extends Controller
                      LIST_GTD.NOTE as DEC_NOTE,
                      LIST_GTD.IS_GROUP,
                      LIST_GTD.ID_LIST_INSPECTOR_OUT ,
-                     LIST_GTD.ID_LIST_CUSTOMS
+                     LIST_GTD.ID_LIST_CUSTOMS,
+                     LIST_GTD.GTD_COUNT as DEC_GTD_COUNT
                      FROM LIST_GTD
                      left join list_customs on list_gtd.id_list_customs = list_customs.id
                      LEFT OUTER JOIN LIST_CLIENT ON (LIST_GTD.ID_LIST_CLIENT = LIST_CLIENT.ID)
@@ -413,12 +417,12 @@ class DeclarationsController extends Controller
         $query = "SELECT DEC_ID,DEC_LIST_CLIENT_NAME,DEC_GTD_NUMBER,DEC_CONT_NUMBERS,
                   DEC_TOTAL_FEACC_NO,DEC_TOTAL_LOT_CASE_NO,DEC_COUNT_CONT,declare_owner as dec_declare_owner, list_customs_number as list_post,
                   DEC_DATE_CLEAR,DEC_LIST_INSPECTOR_OUT_NAME,DEC_FEACC_TEXT,DEC_NOTE, DEC_LIST_INSPECTOR_IN_NAME,
-                  IS_GROUP,ID_LIST_INSPECTOR_OUT,ID_LIST_CUSTOMS
-                  FROM (".$query.") WHERE ".$where_condition." ";
+                  IS_GROUP,ID_LIST_INSPECTOR_OUT,ID_LIST_CUSTOMS, DEC_GTD_COUNT
+                  FROM (".$query.") WHERE ".$where_condition." ORDER BY DEC_DATE_CLEAR";
 
-        if ($where_condition == "1=1" || $where_condition == " 1 = 1 "){ // Если фильтров нет
-            $query = $queryWithoutFiler."\n\t\t\tPLAN (LIST_GTD INDEX (LIST_GTD_IDX7))";
-        }
+        //if ($where_condition == "1=1" || $where_condition == " 1 = 1 "){ // Если фильтров нет
+            //$query = $queryWithoutFiler."\n\t\t\tPLAN (LIST_GTD INDEX (LIST_GTD_IDX7))";
+       // }
 
 
         $q_count = $this->db->query("select count(*) FROM (".$query.")" );

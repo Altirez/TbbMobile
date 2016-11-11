@@ -40,7 +40,8 @@ class EditController extends Controller
         $field_objects = $edit_object_p["fields"];
         $edit_string = "";
         foreach($field_objects as $field_obj){
-        	if(!empty($field_obj["field_type"]) && !empty($field_obj["field_name"]) && !empty($field_obj["field_value"])){
+            $field_obj["field_value"] = !empty($field_obj["field_value"]) ? $field_obj["field_value"] : "null";
+        	if(!empty($field_obj["field_type"]) && !empty($field_obj["field_name"])){
         		switch($field_obj["field_type"]){
         			case "date":
         				$edit_string .= ", ".$field_obj["field_name"]." = '".$field_obj["field_value"]."' ";
@@ -58,7 +59,7 @@ class EditController extends Controller
         }
         $edit_string = substr($edit_string, 1);
      //   return $this->generate_error($app, 404, "UPDATE LIST_TRAFFIC SET ".$edit_string." WHERE ID=".$edit_object_p["row_id"]); 
-       // $db_sql = $this->db->query("UPDATE LIST_TRAFFIC SET ".$edit_string." WHERE ID=".$edit_object_p["row_id"]);
+        $db_sql = $this->db->query("UPDATE LIST_TRAFFIC SET ".$edit_string." WHERE ID=".$edit_object_p["row_id"]);
 
        // if(empty($db_sql)){
        //     return $this->generate_error($app, 404, "Table not found");

@@ -300,6 +300,11 @@ class SearchController extends Controller
             return $this->generate_error($app, 401, "No new access_token");
         }
 
+        $overAllTimer = microtime(true);
+        $timer =  microtime(true);
+        $execTimes =array();
+
+
         $device_id = $app["session"]->get("id_list_mobile_devices");
         $is_custom_bookmark = $request->get('is_custom_bookmark');
         if(empty($is_custom_bookmark)){
@@ -343,6 +348,9 @@ class SearchController extends Controller
                                     left join list_mobile_groups on list_mobile_users.id_list_mobile_groups = list_mobile_groups.id
                                     left join list_mobile_groups_tables on list_mobile_groups_tables.id_list_mobile_groups = list_mobile_groups.id
                                     WHERE list_mobile_groups_tables.id_list_mobile_tables = 1 and list_users.login = '".$request->get('login')."'");
+
+        $execTimesх['$where_condition'] = microtime(true) - $timer;
+        $timer = microtime(true);
 
         $where_condition = $where_condition[0]["WHERE_CONDITION"];
         if (empty($where_condition)) $where_condition = " 1 = 1 ";
@@ -399,6 +407,8 @@ class SearchController extends Controller
             FROM LIST_MOBILE_TABLES
             WHERE ID = ".$table_id."
         ");
+        $execTimes['$db_sql'] = microtime(true) - $timer;
+        $timer = microtime(true);
 
         if(empty($db_sql)){
         	return $this->generate_error($app, 404, "Table not found");
@@ -432,7 +442,8 @@ class SearchController extends Controller
 	        	$search_string .= " LIKE UPPER('%".$main_filter."%')))";
 	        }
 	    }
-
+        $execTimes['$db_fields'] = microtime(true) - $timer;
+        $timer = microtime(true);
 
 
 
@@ -445,6 +456,10 @@ class SearchController extends Controller
             FROM LIST_MOBILE_CUSTOM_BOOKMARKS
             WHERE ID = ".$bookmark_id."
             ");
+
+            $execTimes['$bookmarks'] = microtime(true) - $timer;
+            $timer = microtime(true);
+
             $bookmark = $bookmarks[0];
             $arrs = split("<<<", $bookmark["FIELDS_ORDER"]);
             $table_orders = split(">", $arrs[0]);
@@ -459,6 +474,10 @@ class SearchController extends Controller
                 NAME
                 FROM LIST_MOBILE_FIELDS
                 WHERE ID_LIST_MOBILE_TABLES = 1");
+
+            $execTimes['$keys'] = microtime(true) - $timer;
+            $timer = microtime(true);
+
             $fields_to_get = "RECORD_ID";
             foreach($orders as $arr){
                 foreach ($keys as $key) {
@@ -471,6 +490,9 @@ class SearchController extends Controller
 
 
             $order = $this->db->query("SELECT FIELDS_ORDER FROM LIST_MOBILE_CUSTOM_BOOKMARKS WHERE ID = ".$bookmark_id);
+
+            $execTimes['$order'] = microtime(true) - $timer;
+            $timer = microtime(true);
 
         } else {
             $fields_to_get = "*";
@@ -487,16 +509,26 @@ class SearchController extends Controller
                     $fields_to_get = $res[0]["FIELD_LIST"];
                     $fields_to_get = "RECORD_ID, ".$fields_to_get;
                 }
+
+                $execTimes['$res'] = microtime(true) - $timer;
+                $timer = microtime(true);
             }
         }
 
 
-        $q_count = $this->db->query("select count(*) FROM (".$sql.$search_string2.") ".$search_string."");
+        $q_count = $this->db->query("select count(*) FROM (".$sql.$search_string2.") ".$search_string.""); //ААААААА
         $query = "SELECT ".$fields_to_get." FROM (".$sql.$search_string2.") ".$search_string." ORDER BY TARGET_DATE_ARRIVAL DESC ROWS ".$rows_offset;
+
+        $execTimes['$q_count'] = microtime(true) - $timer;
+        $timer = microtime(true);
+
         //var_dump($sql.$search_string2);
         //exit();
 
         $res = $this->db->query($query);
+
+        $execTimes['$query'] = microtime(true) - $timer;
+        $timer = microtime(true);
 
         if(count($res)>500){
             return $this->generate_error($app, 404, "Results count is too big");
@@ -516,7 +548,13 @@ class SearchController extends Controller
             IN (".implode(',',$result).") GROUP BY ID_LIST_TABLE";
             $res2 = $this->db->query($query2);
         }
-        $response = ["count"=>$q_count[0]["COUNT"], "ok"=>"", "is_custom_bookmark"=>$isc,"fields_order" => $bookmark["FIELDS_ORDER"], "bookmark_id"=>$bms, "access_token"=>$app["session"]->get("new_access_token"), "expires_in"=>time()+7*24*60*60, "result" => $res, "documents" => $res2];
+
+        $execTimes['$query2'] = microtime(true) - $timer;
+        $execTimes['overAll'] = microtime(true) - $overAllTimer;
+
+
+
+        $response = ["count"=>$q_count[0]["COUNT"], 'timings'=>$execTimes, "ok"=>"", "is_custom_bookmark"=>$isc,"fields_order" => $bookmark["FIELDS_ORDER"], "bookmark_id"=>$bms, "access_token"=>$app["session"]->get("new_access_token"), "expires_in"=>time()+7*24*60*60, "result" => $res, "documents" => $res2];
         return $app->json($response);
 
     }
