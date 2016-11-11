@@ -46,7 +46,7 @@ class DeclarationsController extends Controller
         $edit_string = "";
 
         foreach($field_objects as $field_obj){
-            $field_obj["field_value"] =  !empty($field_obj["field_value"]) ? $field_obj["field_value"] : "NULL";
+            $field_obj["field_value"] =  !empty($field_obj["field_value"]) ? $field_obj["field_value"] : "";
 
             if(!empty($field_obj["field_type"]) && !empty($field_obj["field_name"])){
                 switch($field_obj["field_type"]){
